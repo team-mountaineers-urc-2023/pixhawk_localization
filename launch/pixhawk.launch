@@ -1,0 +1,43 @@
+<launch>
+	<!-- mavros and pixhawk_localization args -->
+	<arg name="mavros_local_pose_topic" default="/mavros/local_position/pose"/>
+	<arg name="mavros_global_pose_topic" default="/mavros/global_position/global"/>
+
+	<!-- mavros args -->
+	<arg name="device_path" default="/dev/urc/mtc/pixhawk"/>
+	<arg name="config_yaml" default="$(find mavros)/launch/px4_config.yaml" />
+	<arg name="pluginlists_yaml" default="$(find mavros)/launch/px4_pluginlists.yaml" />
+
+	<!-- pixhawk_localization args -->
+	<arg name="local_position_topic" default="/current_pose"/>
+	<arg name="global_position_topic" default="/current_global_pose"/>
+	<arg name="global_origin_topic" default="/global_origin"/>
+	<arg name="global_origin_frequency" default="1"/>
+
+	<!-- launch mavros for communicating with the pixhawk -->
+	<remap from="/mavros/local_position/pose" to="$(arg mavros_local_pose_topic)"/>
+	<remap from="/mavros/global_position/global" to="$(arg mavros_global_pose_topic)"/>
+	<include file="$(find mavros)/launch/node.launch">
+		<arg name="fcu_url" value="$(arg device_path)"/>
+		<arg name="pluginlists_yaml" value="$(arg pluginlists_yaml)" />
+		<arg name="config_yaml" value="$(arg config_yaml)" />
+		<arg name="log_output" value="screen"/>
+
+		<arg name="gcs_url" value="" />
+		<arg name="tgt_system" value="1" />
+		<arg name="tgt_component" value="1" />
+		<arg name="fcu_protocol" value="v2.0" />
+		<arg name="respawn_mavros" value="True" />
+	</include>
+
+	<!-- launch pixhawk_localization to pass Pose information to localization_topic -->
+	<node pkg="pixhawk_localization" name="pixhawk_localization"
+	type="pixhawk.py" output="screen" respawn="false">
+		<param name="mavros_local_pose_topic" value="$(arg mavros_local_pose_topic)"/>
+		<param name="mavros_global_pose_topic" value="$(arg mavros_global_pose_topic)"/>
+		<param name="local_position_topic" value="$(arg local_position_topic)"/>
+		<param name="global_position_topic" value="$(arg global_position_topic)"/>
+		<param name="global_origin_topic" value="$(arg global_origin_topic)"/>
+		<param name="global_origin_frequency" value="$(arg global_origin_frequency)"/>
+	</node>
+</launch>
